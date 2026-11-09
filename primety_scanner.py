@@ -161,7 +161,7 @@ def send_mail(body, now):
 
 
 def tg(method, **data):
-    token = os.environ["TG_TOKEN"]
+    token = os.environ["TG_TOKEN"].strip()
     req = Request(
         f"https://api.telegram.org/bot{token}/{method}",
         data=json.dumps(data).encode(),
@@ -190,7 +190,7 @@ def send_telegram(videos, now):
     if not (os.environ.get("TG_TOKEN") and os.environ.get("TG_CHAT_ID")):
         print("TG_* не заданы, в Telegram не отправляется")
         return
-    chat = os.environ["TG_CHAT_ID"]
+    chat = os.environ["TG_CHAT_ID"].strip()
     k = int(os.environ.get("TG_TOP", "5"))
     fast = sorted(videos, key=lambda v: v["vph"], reverse=True)[:k]
     seen = {v["id"] for v in fast}
