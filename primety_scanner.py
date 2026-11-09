@@ -191,4 +191,33 @@ def send_telegram(videos, now):
         print("TG_* не заданы, в Telegram не отправляется")
         return
     chat = os.environ["TG_CHAT_ID"]
-    k = int(os.environ.get("T
+    k = int(os.environ.get("TG_TOP", "5"))
+    fast = sorted(videos, key=lambda v: v["vph"], reverse=True)[:k]
+    seen = {v["id"] for v in fast}
+    top = [v for v in sorted(videos, key=lambda v: v["views"], reverse=True) if v["id"] not in seen][:k]
+    for title, items in (("🚀 Взлетают быстрее всего", fast), ("👁 Больше всего просмотров", top)):
+        tg("sendMessage", chat_id=chat, text=f"{title} · {now.strftime('%d.%m.%Y')}")
+        for v in items:
+            tg("sendPhoto", chat_id=chat, photo=v["thumb"], caption=tg_caption(v), parse_mode="HTML")
+            time.sleep(1.2)
+    print("Отправлено в Telegram")
+
+
+def main():
+    if not API_KEY:
+        sys.exit("Задай переменную YT_API_KEY")
+    now = datetime.now(timezone.utc)
+    ids = collect_ids(now)
+    videos = fetch_videos(ids, now)
+    if not videos:
+        sys.exit("Подходящих роликов не найдено")
+    body = build_report(videos, now)
+    with open("report.html", "w", encoding="utf-8") as f:
+        f.write(body)
+    print(f"Готово: report.html, роликов {len(videos)}")
+    send_mail(body, now)
+    send_telegram(videos, now)
+
+
+if __name__ == "__main__":
+    main()
