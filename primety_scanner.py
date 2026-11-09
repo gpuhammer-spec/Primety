@@ -25,7 +25,8 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from urllib.error import HTTPError
 from urllib.parse import urlencode
-from urllib.request import urlopen
+import time
+from urllib.request import Request, urlopen
 
 API_KEY = os.environ.get("YT_API_KEY", "")
 DAYS = int(os.environ.get("DAYS", "7"))
@@ -168,7 +169,49 @@ def send_mail(body, now):
     print("Письмо отправлено на", to)
 
 
-def main():
+def tg(method, **data):
+    token = os.environ["TG_TOKEN"]
+    req = Request(
+        f"https://api.telegram.org/bot{token}/{method}",
+        data=json.dumps(data).encode(),
+        headers={"Content-Type": "application/json"},
+    )
+    try:
+        with urlopen(req, timeout=30) as r:
+            return json.load(r)
+    except HTTPError as err:
+        print("Ошибка Telegram", err.code, err.read().decode("utf-8", "ignore")[:300])
+
+
+def tg_caption(v):
+    e = html.escape
+    return (
+        f"<b>{e(v['title'][:100])}</b>\n"
+        f"{e(v['channel'])} · {fmt_age(v['age_h'])}\n"
+        f"👁 {n(v['views'])} · 👍 {n(v['likes'])} · 💬 {n(v['comments'])}\n"
+        f"🚀 {n(int(v['vph']))} просм/час · вовлечённость {v['er']:.1f}%\n"
+        f"{e(v['desc'][:120])}\n"
+        f"https://www.youtube.com/shorts/{v['id']}"
+    )
+
+
+def send_telegram(videos, now):
+    if not (os.environ.get("TG_TOKEN") and os.environ.get("TG_CHAT_ID")):
+        print("TG_* не заданы, в Telegram не отправляется")
+        return
+    chat = os.environ["TG_CHAT_ID"]
+    k = int(os.environ.get("TG_TOP", "5"))
+    fast = sorted(videos, key=lambda v: v["vph"], reverse=True)[:k]
+    seen = {v["id"] for v in fast}
+    top = [v for v in sorted(videos, key=lambda v: v["views"], reverse=True) if v["id"] not in seen][:k]
+    for title, items in (("🚀 Взлетают быстрее всего", fast), ("👁 Больше всего просмотров", top)):
+        tg("sendMessage", chat_id=chat, text=f"{title} · {now.strftime('%d.%m.%Y')}")
+        for v in items:
+            tg("sendPhoto", chat_id=chat, photo=v["thumb"], caption=tg_caption(v), parse_mode="HTML")
+            time.sleep(1.2)
+    print("Отправлено в Telegram")
+    
+  def main():
     if not API_KEY:
         sys.exit("Задай переменную YT_API_KEY")
     now = datetime.now(timezone.utc)
@@ -181,6 +224,7 @@ def main():
         f.write(body)
     print(f"Готово: report.html, роликов {len(videos)}")
     send_mail(body, now)
+    send_telegram(videos, now)
 
 
 if __name__ == "__main__":
