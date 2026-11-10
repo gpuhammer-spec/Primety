@@ -68,8 +68,9 @@ def collect_ids(now):
         for order, since in passes:
             data = call(
                 "search", part="id", q=q, type="video", videoDuration="short",
-                order=order, publishedAfter=iso(since), relevanceLanguage="ru",
-                regionCode="RU", maxResults=50,
+                order=order, publishedAfter=iso(since),
+                relevanceLanguage=os.environ.get("YT_LANG", "ru"),
+                regionCode=os.environ.get("YT_REGION", "RU"), maxResults=50,
             )
             for it in data.get("items", []):
                 ids.add(it["id"]["videoId"])
@@ -84,7 +85,7 @@ def fetch_videos(ids, now):
             sn, st = v["snippet"], v.get("statistics", {})
             if seconds(v["contentDetails"].get("duration")) > 60:
                 continue
-            if not CYR.search(sn["title"] + sn.get("description", "")):
+            if os.environ.get("ANY_LANG") != "1" and not CYR.search(sn["title"] + sn.get("description", "")):
                 continue
             views = int(st.get("viewCount", 0))
             if views == 0:
