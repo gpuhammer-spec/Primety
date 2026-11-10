@@ -21,6 +21,7 @@ jobs:
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
           LABEL: "🔮 Приметы · "
+          REPORT_FILE: report-primety.html
       - name: Русскоязычные шорты
         run: python primety_scanner.py
         env:
@@ -31,8 +32,8 @@ jobs:
           DAYS: "1"
           YT_REGION: ""
           YT_LANG: "ru"
-          REPORT_FILE: report-ru.html
           LABEL: "🇷🇺 Русскоязычные · "
+          REPORT_FILE: report-ru.html
       - name: Шорты со всего мира
         run: python primety_scanner.py
         env:
@@ -44,12 +45,12 @@ jobs:
           YT_REGION: ""
           YT_LANG: ""
           ANY_LANG: "1"
-          REPORT_FILE: report-world.html
           LABEL: "🌍 Весь мир · "
+          REPORT_FILE: report-world.html
       - uses: actions/upload-artifact@v4
         with:
           name: reports
           path: |
-            report.html
+            report-primety.html
             report-ru.html
             report-world.html
