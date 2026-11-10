@@ -1,7 +1,7 @@
 name: daily-primety
 on:
   schedule:
-    - cron: "0 5 * * *"
+    - cron: "0 9 * * *"
   workflow_dispatch:
 jobs:
   run:
@@ -11,7 +11,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Приметы
+      - name: Приметы на русском
         run: python primety_scanner.py
         env:
           YT_API_KEY: ${{ secrets.YT_API_KEY }}
@@ -20,37 +20,24 @@ jobs:
           MAIL_TO: ${{ secrets.MAIL_TO }}
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
-          LABEL: "🔮 Приметы · "
+          LABEL: "🔮 Приметы (RU) · "
           REPORT_FILE: report-primety.html
-      - name: Русскоязычные шорты
+      - name: Приметы по всему миру
         run: python primety_scanner.py
         env:
           YT_API_KEY: ${{ secrets.YT_API_KEY }}
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
-          QUERY_LIST: "*"
-          DAYS: "1"
-          YT_REGION: ""
-          YT_LANG: "ru"
-          LABEL: "🇷🇺 Русскоязычные · "
-          REPORT_FILE: report-ru.html
-      - name: Шорты со всего мира
-        run: python primety_scanner.py
-        env:
-          YT_API_KEY: ${{ secrets.YT_API_KEY }}
-          TG_TOKEN: ${{ secrets.TG_TOKEN }}
-          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
-          QUERY_LIST: "*"
-          DAYS: "1"
+          QUERY_LIST: "superstitions|bad luck superstitions|folk omens and beliefs|evil eye protection|lucky charms|old wives tales"
+          DAYS: "7"
           YT_REGION: ""
           YT_LANG: ""
           ANY_LANG: "1"
-          LABEL: "🌍 Весь мир · "
-          REPORT_FILE: report-world.html
+          LABEL: "🌍 Приметы мира · "
+          REPORT_FILE: report-world-omens.html
       - uses: actions/upload-artifact@v4
         with:
           name: reports
           path: |
             report-primety.html
-            report-ru.html
-            report-world.html
+            report-world-omens.html
