@@ -2,7 +2,16 @@
 """
 Ежедневный отчёт: самые популярные русскоязычные Shorts про приметы, поверья, мистику.
 Только стандартная библиотека Python 3.8+, ничего устанавливать не нужно.
-Результат: report.html, письмо (если заданы SMTP_*), Telegram (если заданы TG_*).
+
+Переменные окружения:
+  YT_API_KEY   (обязательно) ключ YouTube Data API v3
+  DAYS         за сколько дней искать популярные (по умолчанию 7)
+  TOP          сколько роликов в каждом списке (по умолчанию 10)
+  SMTP_USER    (для почты) адрес Gmail отправителя
+  SMTP_PASS    (для почты) пароль приложения Gmail (не обычный пароль)
+  MAIL_TO      (для почты) куда слать отчёт
+
+Результат: report.html рядом со скриптом (+ письмо, если заданы SMTP_*).
 """
 import html
 import json
@@ -11,12 +20,12 @@ import re
 import smtplib
 import ssl
 import sys
-import time
 from datetime import datetime, timedelta, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from urllib.error import HTTPError
 from urllib.parse import urlencode
+import time
 from urllib.request import Request, urlopen
 
 API_KEY = os.environ.get("YT_API_KEY", "")
@@ -34,6 +43,11 @@ QUERIES = [
     "что носить с собой для удачи",
     "запреты по народным приметам",
 ]
+
+if os.environ.get("QUERY_LIST"):
+    QUERIES = [("" if q.strip() == "*" else q.strip()) for q in os.environ["QUERY_LIST"].split("|")]
+REPORT_FILE = os.environ.get("REPORT_FILE", "report.html")
+LABEL = os.environ.get("LABEL", "")
 
 API = "https://www.googleapis.com/youtube/v3/"
 CYR = re.compile(r"[а-яА-ЯёЁ]")
@@ -136,7 +150,7 @@ def build_report(videos, now):
     fast = sorted(videos, key=lambda v: v["vph"], reverse=True)[:TOP]
     top = sorted(videos, key=lambda v: v["views"], reverse=True)[:TOP]
     eng = sorted([v for v in videos if v["views"] >= 1000], key=lambda v: v["er"], reverse=True)[:TOP]
-    head = f"<h1 style='font-family:Arial'>Приметы и поверья: отчёт за {now.strftime('%d.%m.%Y')}</h1>"
+    head = f"<h1 style='font-family:Arial'>{LABEL}Отчёт по Shorts за {now.strftime('%d.%m.%Y')}</h1>"
     head += f"<p style='font-family:Arial'>Проверено роликов: {len(videos)}</p>"
     return (
         "<html><body>" + head
@@ -198,7 +212,7 @@ def send_telegram(videos, now):
     seen = {v["id"] for v in fast}
     top = [v for v in sorted(videos, key=lambda v: v["views"], reverse=True) if v["id"] not in seen][:k]
     for title, items in (("🚀 Взлетают быстрее всего", fast), ("👁 Больше всего просмотров", top)):
-        tg("sendMessage", chat_id=chat, text=f"{title} · {now.strftime('%d.%m.%Y')}")
+        tg("sendMessage", chat_id=chat, text=f"{LABEL}{title} · {now.strftime('%d.%m.%Y')}")
         for v in items:
             tg("sendPhoto", chat_id=chat, photo=v["thumb"], caption=tg_caption(v), parse_mode="HTML")
             time.sleep(1.2)
@@ -214,9 +228,9 @@ def main():
     if not videos:
         sys.exit("Подходящих роликов не найдено")
     body = build_report(videos, now)
-    with open("report.html", "w", encoding="utf-8") as f:
+    with open(REPORT_FILE, "w", encoding="utf-8") as f:
         f.write(body)
-    print(f"Готово: report.html, роликов {len(videos)}")
+    print(f"Готово: {REPORT_FILE}, роликов {len(videos)}, запросов {len(QUERIES)}, режим: {LABEL or 'приметы'}")
     send_mail(body, now)
     send_telegram(videos, now)
 
