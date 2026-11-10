@@ -40,6 +40,7 @@ CYR = re.compile(r"[а-яА-ЯёЁ]")
 
 
 def call(endpoint, **params):
+    params = {k: v for k, v in params.items() if v != ""}
     params["key"] = API_KEY
     url = API + endpoint + "?" + urlencode(params)
     try:
