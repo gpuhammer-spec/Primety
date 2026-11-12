@@ -37,7 +37,7 @@ jobs:
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
           LABEL: "🔮 Приметы (RU) · "
           REPORT_FILE: report-primety.html
-            - name: Мудрость и психология на русском
+      - name: Мудрость и психология на русском
         if: steps.check.outputs.skip != 'true'
         run: python primety_scanner.py
         env:
@@ -62,9 +62,11 @@ jobs:
           ANY_LANG: "1"
           LABEL: "💭 Wisdom (world) · "
           REPORT_FILE: report-wisdom-world.html
+      - uses: actions/upload-artifact@v4
         if: steps.check.outputs.skip != 'true'
         with:
           name: reports
           path: |
             report-primety.html
-            report-world-omens.html
+            report-wisdom-ru.html
+            report-wisdom-world.html
