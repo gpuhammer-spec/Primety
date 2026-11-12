@@ -37,21 +37,31 @@ jobs:
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
           LABEL: "🔮 Приметы (RU) · "
           REPORT_FILE: report-primety.html
-      - name: Приметы по всему миру
+            - name: Мудрость и психология на русском
         if: steps.check.outputs.skip != 'true'
         run: python primety_scanner.py
         env:
           YT_API_KEY: ${{ secrets.YT_API_KEY }}
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
-          QUERY_LIST: "superstitions|bad luck superstitions|folk omens and beliefs|evil eye protection|lucky charms|old wives tales"
-          DAYS: "7"
+          QUERY_LIST: "цитаты о жизни|психология отношений|мудрость жизни|мотивация и дисциплина|стоицизм"
+          DAYS: "3"
+          LABEL: "💭 Мудрость (RU) · "
+          REPORT_FILE: report-wisdom-ru.html
+      - name: Мудрость и психология по всему миру
+        if: steps.check.outputs.skip != 'true'
+        run: python primety_scanner.py
+        env:
+          YT_API_KEY: ${{ secrets.YT_API_KEY }}
+          TG_TOKEN: ${{ secrets.TG_TOKEN }}
+          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+          QUERY_LIST: "life quotes|psychology facts|life wisdom|stoicism|motivation discipline"
+          DAYS: "3"
           YT_REGION: ""
-          YT_LANG: ""
+          YT_LANG: "en"
           ANY_LANG: "1"
-          LABEL: "🌍 Приметы мира · "
-          REPORT_FILE: report-world-omens.html
-      - uses: actions/upload-artifact@v4
+          LABEL: "💭 Wisdom (world) · "
+          REPORT_FILE: report-wisdom-world.html
         if: steps.check.outputs.skip != 'true'
         with:
           name: reports
